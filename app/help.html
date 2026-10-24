@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>使い方 - 寄付芳名帳</title>
+<style>
+  :root {
+    --bg: #f1f3f6;
+    --panel: #ffffff;
+    --border: #dfe3e8;
+    --text: #1f2430;
+    --muted: #677084;
+    --accent: #2563eb;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .container { max-width: 760px; margin: 0 auto; padding: 24px 16px 64px; }
+  .back-link { display: inline-block; margin-bottom: 16px; color: var(--accent); text-decoration: none; font-size: 0.9rem; }
+  .back-link:hover { text-decoration: underline; }
+  header h1 { margin: 0 0 4px; font-size: 1.5rem; }
+  header .subtitle { margin: 0 0 24px; color: var(--muted); font-size: 0.9rem; }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+  .card h2 { margin-top: 0; font-size: 1.1rem; display: flex; align-items: center; gap: 8px; }
+  .step-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--accent); color: #fff; font-size: 0.85rem; font-weight: 600; flex-shrink: 0;
+  }
+  .card p, .card li { line-height: 1.7; }
+  .card ul { margin: 8px 0; padding-left: 22px; }
+  .note {
+    background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px;
+    padding: 10px 14px; font-size: 0.9rem; color: var(--text); margin-top: 10px;
+  }
+  .warn {
+    background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px;
+    padding: 10px 14px; font-size: 0.9rem; color: var(--text); margin-top: 10px;
+  }
+  code {
+    background: #f1f3f6; border: 1px solid var(--border); border-radius: 4px;
+    padding: 1px 6px; font-size: 0.88em;
+  }
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 0.92rem; }
+  th, td { padding: 8px; border-bottom: 1px solid var(--border); text-align: left; }
+  th { color: var(--muted); font-weight: 600; font-size: 0.82rem; }
+</style>
+</head>
+<body>
+  <div class="container">
+    <a href="index.html" class="back-link">&larr; 芳名帳に戻る</a>
+    <header>
+      <h1>寄付芳名帳の使い方</h1>
+      <p class="subtitle">お祭り受付でのご利用を想定した操作説明です</p>
+    </header>
+
+    <section class="card">
+      <h2><span class="step-num">1</span>寄付を登録する</h2>
+      <p>「新規登録」フォームに以下を入力し、<strong>登録</strong>ボタンを押します。</p>
+      <ul>
+        <li><strong>年度</strong>：西暦4桁(例: 2026)。一度入力すると次の登録時も同じ値が残ります。</li>
+        <li><strong>班</strong>：受付している班の番号。こちらも前回入力した値が残ります。</li>
+        <li><strong>芳名</strong>：寄付者のお名前。キーボード入力のほか、🎤ボタンでの音声入力にも対応しています(下記3を参照)。</li>
+        <li><strong>寄付金額</strong>：プルダウンから選択(1,000円〜30,000円、1,000円刻み)。選択すると右側に「ふくびき抽選券枚数」が自動表示されます(1,000円につき1枚)。</li>
+      </ul>
+      <div class="note">同じ班が続けて登録する場合、年度・班は前回の値のまま残るので、芳名と金額だけ入力すればすぐに次の方を登録できます。</div>
+    </section>
+
+    <section class="card">
+      <h2><span class="step-num">2</span>登録内容を修正・削除する</h2>
+      <p>一覧表の各行にある操作ボタンを使います。</p>
+      <ul>
+        <li><strong>編集</strong>：その行の内容がフォームに読み込まれます。内容を直して<strong>更新</strong>ボタンを押すと上書きされます。編集を途中でやめる場合は<strong>キャンセル</strong>ボタンを押してください。</li>
+        <li><strong>削除</strong>：確認メッセージが表示されます。内容を確認して「削除する」を押すと削除されます(押し間違い防止のため、必ず確認画面が出ます)。</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2><span class="step-num">3</span>音声入力で芳名を入力する</h2>
+      <p>芳名欄の右にある🎤ボタンを押すとマイクで音声入力ができます。</p>
+      <ul>
+        <li>ボタンを押す(赤く点滅＝録音中)→お名前を話す→自動的に認識結果が芳名欄に入ります。</li>
+        <li>もう一度ボタンを押すと録音を止められます。</li>
+        <li>うまく認識されなかった場合は、ボタン下にエラーメッセージが表示されます。再度ボタンを押してやり直してください。</li>
+      </ul>
+      <div class="note">初回利用時はブラウザからマイク使用の許可を求められます。「許可」を選んでください。インターネット接続が必要です。</div>
+      <div class="warn">Google Chrome・Microsoft Edgeでの利用を想定しています。Safari等、音声入力に対応していないブラウザでは🎤ボタンは表示されません(キーボード入力のみご利用いただけます)。</div>
+    </section>
+
+    <section class="card">
+      <h2><span class="step-num">4</span>一覧を年度・班で絞り込む</h2>
+      <p>一覧表の上にある「年度で絞り込み」「班で絞り込み」のプルダウンで表示を絞り込めます。両方「すべて」にすると全件表示されます。</p>
+      <p>絞り込むと、その条件に該当するデータだけが一覧とカード表示(表示中の件数・寄付金額合計・抽選券枚数合計)に反映されます。</p>
+    </section>
+
+    <section class="card">
+      <h2><span class="step-num">5</span>CSVを出力する</h2>
+      <p>「CSV出力」ボタンを押すと、<strong>現在の絞り込み条件</strong>に該当するデータがCSVファイルとしてダウンロードされます。</p>
+      <table>
+        <thead><tr><th>列</th><th>内容</th></tr></thead>
+        <tbody>
+          <tr><td>年度</td><td>登録した年度</td></tr>
+          <tr><td>班</td><td>登録した班番号</td></tr>
+          <tr><td>芳名</td><td>寄付者のお名前</td></tr>
+          <tr><td>寄付金額</td><td>円単位の金額</td></tr>
+          <tr><td>抽選券枚数</td><td>自動計算された配布枚数</td></tr>
+        </tbody>
+      </table>
+      <div class="note">ファイル名は<code>芳名帳_年度_班.csv</code>の形式で、絞り込み条件が分かるようになっています(例: <code>芳名帳_2026年度_全班.csv</code>)。Excelで開いても文字化けしません。</div>
+    </section>
+
+    <section class="card">
+      <h2><span class="step-num">6</span>データの保存について</h2>
+      <p>登録したデータは、この機器・このブラウザの中(localStorage)に自動的に保存されます。サーバーには送信されません。</p>
+      <div class="warn">ブラウザの閲覧履歴やサイトデータを「全削除」する操作を行うと、登録データも消えてしまうことがあります。大事なデータは定期的にCSV出力してバックアップを取ることをおすすめします。</div>
+    </section>
+  </div>
+</body>
+</html>

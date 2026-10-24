@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>寄付芳名帳</title>
+<style>
+  :root {
+    --bg: #f1f3f6;
+    --panel: #ffffff;
+    --border: #dfe3e8;
+    --text: #1f2430;
+    --muted: #677084;
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --danger: #dc2626;
+    --danger-hover: #b91c1c;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .container { max-width: 960px; margin: 0 auto; padding: 24px 16px 64px; }
+  header h1 { margin: 0; font-size: 1.5rem; }
+  header .subtitle { margin: 4px 0 24px; color: var(--muted); font-size: 0.9rem; }
+  .header-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+  .header-top h1 { margin: 0; }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+  .card h2 { margin-top: 0; font-size: 1.1rem; }
+  .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; align-items: end; }
+  .form-grid label { display: flex; flex-direction: column; font-size: 0.85rem; color: var(--muted); gap: 4px; }
+  .form-grid label.span2 { grid-column: 1 / -1; }
+  .input-with-mic { display: flex; gap: 8px; }
+  .input-with-mic input { flex: 1; min-width: 0; }
+  .btn-mic { padding: 8px 14px; font-size: 1.1rem; line-height: 1; flex-shrink: 0; }
+  .btn-mic.recording { background: var(--danger); color: #fff; border-color: var(--danger); animation: mic-pulse 1.2s infinite; }
+  @keyframes mic-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+  .mic-status { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+  .mic-status.error { color: var(--danger); }
+  input, select {
+    font-size: 1rem;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--text);
+  }
+  input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .tickets-display { font-size: 0.95rem; color: var(--text); padding-bottom: 8px; }
+  .tickets-display span { font-weight: 600; color: var(--accent); }
+  .form-actions { margin-top: 16px; display: flex; gap: 10px; }
+  .btn { display: inline-block; border: none; border-radius: 8px; padding: 10px 18px; font-size: 0.95rem; cursor: pointer; text-decoration: none; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-secondary { background: #e5e7eb; color: var(--text); }
+  .btn-secondary:hover { background: #d1d5db; }
+  .btn-outline { background: #fff; border: 1px solid var(--border); color: var(--text); }
+  .btn-outline:hover { background: #f3f4f6; }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-danger:hover { background: var(--danger-hover); }
+  .btn-small { padding: 6px 10px; font-size: 0.85rem; }
+  .error-msg {
+    background: #fef2f2;
+    color: var(--danger);
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 14px;
+    font-size: 0.9rem;
+  }
+  .toolbar { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 12px; }
+  .filter-group { display: flex; gap: 12px; flex-wrap: wrap; }
+  .filter-group label { display: flex; flex-direction: column; font-size: 0.85rem; color: var(--muted); gap: 4px; }
+  .stats-row { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .stat-tile { flex: 1 1 150px; background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .stat-label { font-size: 0.8rem; color: var(--muted); }
+  .stat-value { font-size: 1.6rem; font-weight: 600; color: var(--text); margin-top: 4px; }
+  .stat-tile-accent { background: #eff6ff; border-color: #bfdbfe; }
+  .stat-value-accent { color: var(--accent); }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+  th, td { padding: 10px 8px; border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap; }
+  th { color: var(--muted); font-weight: 600; font-size: 0.82rem; }
+  td.actions { display: flex; gap: 6px; }
+  .empty-msg { text-align: center; color: var(--muted); padding: 24px 0; }
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+    display: flex; align-items: center; justify-content: center; padding: 16px;
+  }
+  .modal-overlay[hidden] { display: none; }
+  .modal { background: #fff; border-radius: 12px; padding: 20px; max-width: 360px; width: 100%; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+  @media (max-width: 480px) {
+    .form-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="header-top">
+        <h1>寄付芳名帳</h1>
+        <a href="help.html" target="_blank" rel="noopener" class="btn btn-outline btn-small">使い方</a>
+      </div>
+      <p class="subtitle">お祭り寄付の記録とふくびき抽選券の管理</p>
+    </header>
+
+    <section class="card">
+      <h2 id="formTitle">新規登録</h2>
+      <div id="formError" class="error-msg" hidden></div>
+      <form id="entryForm" novalidate>
+        <div class="form-grid">
+          <label>年度
+            <input type="number" id="inputYear" min="2000" max="2100" step="1" required>
+          </label>
+          <label>班
+            <input type="number" id="inputGroup" min="1" step="1" required>
+          </label>
+          <label class="span2">芳名
+            <div class="input-with-mic">
+              <input type="text" id="inputName" required>
+              <button type="button" id="micBtn" class="btn btn-outline btn-mic" title="音声入力">🎤</button>
+            </div>
+            <div id="micStatus" class="mic-status" hidden></div>
+          </label>
+          <label>寄付金額
+            <select id="inputAmount" required></select>
+          </label>
+          <div class="tickets-display">ふくびき抽選券枚数: <span id="ticketsPreview">-</span></div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" id="submitBtn" class="btn btn-primary">登録</button>
+          <button type="button" id="cancelEditBtn" class="btn btn-secondary" hidden>キャンセル</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="card">
+      <div class="toolbar">
+        <div class="filter-group">
+          <label>年度で絞り込み
+            <select id="filterYear"></select>
+          </label>
+          <label>班で絞り込み
+            <select id="filterGroup"></select>
+          </label>
+        </div>
+        <button id="exportCsvBtn" class="btn btn-outline" type="button">CSV出力</button>
+      </div>
+      <div class="stats-row" id="statsRow"></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>年度</th><th>班</th><th>芳名</th><th>寄付金額</th><th>抽選券枚数</th><th>操作</th></tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+        <p id="emptyMsg" class="empty-msg" hidden>登録されたデータはありません</p>
+      </div>
+    </section>
+  </div>
+
+  <div class="modal-overlay" id="deleteModal" hidden>
+    <div class="modal">
+      <p id="deleteModalMsg"></p>
+      <div class="modal-actions">
+        <button id="deleteCancelBtn" class="btn btn-secondary" type="button">キャンセル</button>
+        <button id="deleteConfirmBtn" class="btn btn-danger" type="button">削除する</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function () {
+  'use strict';
+
+  var STORAGE_KEY = 'kifu-houmeicho-state-v1';
+  var MIN_AMOUNT = 1000, MAX_AMOUNT = 30000, STEP = 1000;
+
+  var state = {
+    entries: [],
+    nextId: 1,
+    lastYear: new Date().getFullYear(),
+    lastGroup: ''
+  };
+
+  var ui = {
+    filterYear: 'all',
+    filterGroup: 'all',
+    editingId: null,
+    deleteTargetId: null
+  };
+
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.entries)) {
+          state.entries = parsed.entries;
+          state.nextId = typeof parsed.nextId === 'number'
+            ? parsed.nextId
+            : state.entries.reduce(function (m, e) { return Math.max(m, e.id); }, 0) + 1;
+          state.lastYear = parsed.lastYear || state.lastYear;
+          state.lastGroup = parsed.lastGroup || '';
+        }
+      }
+    } catch (e) {
+      console.error('状態の読み込みに失敗しました', e);
+    }
+  }
+
+  function saveState() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  function ticketsFor(amount) {
+    return Math.floor(amount / STEP);
+  }
+
+  function uniqueSorted(values) {
+    return Array.from(new Set(values)).sort(function (a, b) { return a - b; });
+  }
+
+  function filteredEntries() {
+    return state.entries.filter(function (e) {
+      if (ui.filterYear !== 'all' && e.year !== ui.filterYear) return false;
+      if (ui.filterGroup !== 'all' && e.group !== ui.filterGroup) return false;
+      return true;
+    });
+  }
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function el(id) { return document.getElementById(id); }
+
+  function populateAmountOptions() {
+    var select = el('inputAmount');
+    var html = '<option value="" disabled selected>選択してください</option>';
+    for (var v = MIN_AMOUNT; v <= MAX_AMOUNT; v += STEP) {
+      html += '<option value="' + v + '">' + v.toLocaleString() + '円</option>';
+    }
+    select.innerHTML = html;
+  }
+
+  function updateTicketsPreview() {
+    var amount = Number(el('inputAmount').value);
+    el('ticketsPreview').textContent = amount ? ticketsFor(amount) + '枚' : '-';
+  }
+
+  function resetFormFields() {
+    el('entryForm').reset();
+    el('inputYear').value = state.lastYear;
+    el('inputGroup').value = state.lastGroup;
+    el('inputAmount').value = '';
+    updateTicketsPreview();
+    el('formError').hidden = true;
+    el('micStatus').hidden = true;
+  }
+
+  function enterEditMode(id) {
+    var entry = state.entries.filter(function (e) { return e.id === id; })[0];
+    if (!entry) return;
+    ui.editingId = id;
+    el('inputYear').value = entry.year;
+    el('inputGroup').value = entry.group;
+    el('inputName').value = entry.name;
+    el('inputAmount').value = String(entry.amount);
+    updateTicketsPreview();
+    el('formTitle').textContent = '登録内容の編集';
+    el('submitBtn').textContent = '更新';
+    el('cancelEditBtn').hidden = false;
+    el('formError').hidden = true;
+    el('inputName').focus();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function exitEditMode() {
+    ui.editingId = null;
+    el('formTitle').textContent = '新規登録';
+    el('submitBtn').textContent = '登録';
+    el('cancelEditBtn').hidden = true;
+    resetFormFields();
+  }
+
+  function showMicStatus(message, isError) {
+    var statusEl = el('micStatus');
+    statusEl.textContent = message;
+    statusEl.hidden = false;
+    statusEl.classList.toggle('error', !!isError);
+  }
+
+  function hideMicStatus() {
+    el('micStatus').hidden = true;
+  }
+
+  function initVoiceInput() {
+    var micBtn = el('micBtn');
+    var SpeechRecognitionImpl = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognitionImpl) {
+      micBtn.hidden = true;
+      return;
+    }
+
+    var recognition = new SpeechRecognitionImpl();
+    recognition.lang = 'ja-JP';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    var isRecording = false;
+
+    var ERROR_MESSAGES = {
+      'no-speech': '音声が検出されませんでした。もう一度お試しください。',
+      'audio-capture': 'マイクが見つかりません。',
+      'not-allowed': 'マイクの使用が許可されていません。ブラウザの設定を確認してください。',
+      'network': 'ネットワークエラーが発生しました。'
+    };
+
+    recognition.addEventListener('result', function (ev) {
+      var transcript = ev.results[0][0].transcript;
+      el('inputName').value = transcript;
+      el('inputName').focus();
+      showMicStatus('認識結果: 「' + transcript + '」', false);
+    });
+
+    recognition.addEventListener('error', function (ev) {
+      showMicStatus(ERROR_MESSAGES[ev.error] || '音声入力でエラーが発生しました。', true);
+    });
+
+    recognition.addEventListener('end', function () {
+      isRecording = false;
+      micBtn.classList.remove('recording');
+    });
+
+    micBtn.addEventListener('click', function () {
+      if (isRecording) {
+        recognition.stop();
+        return;
+      }
+      hideMicStatus();
+      try {
+        recognition.start();
+        isRecording = true;
+        micBtn.classList.add('recording');
+        showMicStatus('音声入力中…お名前をお話しください', false);
+      } catch (e) {
+        showMicStatus('音声入力を開始できませんでした。', true);
+      }
+    });
+  }
+
+  function renderFiltersOptions() {
+    var yearSelect = el('filterYear');
+    var groupSelect = el('filterGroup');
+    var years = uniqueSorted(state.entries.map(function (e) { return e.year; }));
+    var groups = uniqueSorted(state.entries.map(function (e) { return e.group; }));
+
+    var prevYear = ui.filterYear;
+    var prevGroup = ui.filterGroup;
+
+    yearSelect.innerHTML = '<option value="all">すべて</option>' +
+      years.map(function (y) { return '<option value="' + y + '">' + y + '年度</option>'; }).join('');
+    groupSelect.innerHTML = '<option value="all">すべて</option>' +
+      groups.map(function (g) { return '<option value="' + g + '">' + g + '班</option>'; }).join('');
+
+    ui.filterYear = (prevYear === 'all' || years.indexOf(prevYear) !== -1) ? prevYear : 'all';
+    ui.filterGroup = (prevGroup === 'all' || groups.indexOf(prevGroup) !== -1) ? prevGroup : 'all';
+    yearSelect.value = ui.filterYear;
+    groupSelect.value = ui.filterGroup;
+  }
+
+  function renderTable() {
+    var tbody = el('tableBody');
+    var emptyMsg = el('emptyMsg');
+    var rows = filteredEntries().slice().sort(function (a, b) { return b.id - a.id; });
+
+    if (rows.length === 0) {
+      tbody.innerHTML = '';
+      emptyMsg.hidden = false;
+      return;
+    }
+    emptyMsg.hidden = true;
+
+    tbody.innerHTML = rows.map(function (e) {
+      return '<tr>' +
+        '<td>' + e.year + '</td>' +
+        '<td>' + e.group + '</td>' +
+        '<td>' + escapeHtml(e.name) + '</td>' +
+        '<td>' + e.amount.toLocaleString() + '円</td>' +
+        '<td>' + ticketsFor(e.amount) + '枚</td>' +
+        '<td class="actions">' +
+          '<button class="btn btn-small btn-outline" data-action="edit" data-id="' + e.id + '" type="button">編集</button>' +
+          '<button class="btn btn-small btn-danger" data-action="delete" data-id="' + e.id + '" type="button">削除</button>' +
+        '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  function renderSummary() {
+    var rows = filteredEntries();
+    var totalAmount = rows.reduce(function (sum, e) { return sum + e.amount; }, 0);
+    var totalTickets = rows.reduce(function (sum, e) { return sum + ticketsFor(e.amount); }, 0);
+    el('statsRow').innerHTML =
+      '<div class="stat-tile">' +
+        '<div class="stat-label">表示中の件数</div>' +
+        '<div class="stat-value">' + rows.length.toLocaleString() + '件</div>' +
+      '</div>' +
+      '<div class="stat-tile stat-tile-accent">' +
+        '<div class="stat-label">寄付金額合計</div>' +
+        '<div class="stat-value stat-value-accent">' + totalAmount.toLocaleString() + '円</div>' +
+      '</div>' +
+      '<div class="stat-tile">' +
+        '<div class="stat-label">抽選券枚数合計</div>' +
+        '<div class="stat-value">' + totalTickets.toLocaleString() + '枚</div>' +
+      '</div>';
+  }
+
+  function refreshListUI() {
+    renderFiltersOptions();
+    renderTable();
+    renderSummary();
+  }
+
+  function csvField(value) {
+    var str = String(value);
+    if (/[",\n]/.test(str)) {
+      return '"' + str.replace(/"/g, '""') + '"';
+    }
+    return str;
+  }
+
+  function requestDelete(id) {
+    var entry = state.entries.filter(function (e) { return e.id === id; })[0];
+    ui.deleteTargetId = id;
+    el('deleteModalMsg').textContent = entry
+      ? '「' + entry.name + '」さん(' + entry.year + '年度・' + entry.group + '班)の登録を削除しますか？'
+      : '削除しますか？';
+    el('deleteModal').hidden = false;
+  }
+
+  function closeDeleteModal() {
+    ui.deleteTargetId = null;
+    el('deleteModal').hidden = true;
+  }
+
+  function init() {
+    loadState();
+    populateAmountOptions();
+    resetFormFields();
+    refreshListUI();
+    initVoiceInput();
+
+    el('inputAmount').addEventListener('change', updateTicketsPreview);
+
+    el('entryForm').addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var yearVal = el('inputYear').value;
+      var groupVal = el('inputGroup').value;
+      var nameVal = el('inputName').value.trim();
+      var amountVal = el('inputAmount').value;
+
+      var year = Number(yearVal);
+      var group = Number(groupVal);
+      var amount = Number(amountVal);
+      var errors = [];
+
+      if (!yearVal || !Number.isInteger(year) || year < 2000 || year > 2100) errors.push('年度を正しく入力してください。');
+      if (!groupVal || !Number.isInteger(group) || group < 1) errors.push('班を正しく入力してください。');
+      if (!nameVal) errors.push('芳名を入力してください。');
+      if (!amountVal) errors.push('寄付金額を選択してください。');
+
+      var errorBox = el('formError');
+      if (errors.length > 0) {
+        errorBox.textContent = errors.join(' ');
+        errorBox.hidden = false;
+        return;
+      }
+
+      if (ui.editingId !== null) {
+        var entry = state.entries.filter(function (e) { return e.id === ui.editingId; })[0];
+        if (entry) {
+          entry.year = year;
+          entry.group = group;
+          entry.name = nameVal;
+          entry.amount = amount;
+        }
+      } else {
+        state.entries.push({ id: state.nextId++, year: year, group: group, name: nameVal, amount: amount });
+      }
+
+      state.lastYear = year;
+      state.lastGroup = group;
+      saveState();
+
+      exitEditMode();
+      refreshListUI();
+    });
+
+    el('cancelEditBtn').addEventListener('click', function () {
+      exitEditMode();
+    });
+
+    el('tableBody').addEventListener('click', function (ev) {
+      var btn = ev.target.closest('button[data-action]');
+      if (!btn) return;
+      var id = Number(btn.dataset.id);
+      if (btn.dataset.action === 'edit') enterEditMode(id);
+      if (btn.dataset.action === 'delete') requestDelete(id);
+    });
+
+    el('filterYear').addEventListener('change', function (ev) {
+      ui.filterYear = ev.target.value === 'all' ? 'all' : Number(ev.target.value);
+      renderTable();
+      renderSummary();
+    });
+
+    el('filterGroup').addEventListener('change', function (ev) {
+      ui.filterGroup = ev.target.value === 'all' ? 'all' : Number(ev.target.value);
+      renderTable();
+      renderSummary();
+    });
+
+    el('deleteCancelBtn').addEventListener('click', closeDeleteModal);
+    el('deleteConfirmBtn').addEventListener('click', function () {
+      if (ui.deleteTargetId !== null) {
+        state.entries = state.entries.filter(function (e) { return e.id !== ui.deleteTargetId; });
+        saveState();
+        if (ui.editingId === ui.deleteTargetId) exitEditMode();
+        refreshListUI();
+      }
+      closeDeleteModal();
+    });
+
+    el('exportCsvBtn').addEventListener('click', function () {
+      var rows = filteredEntries().slice().sort(function (a, b) { return b.id - a.id; });
+      var lines = [['年度', '班', '芳名', '寄付金額', '抽選券枚数'].join(',')];
+      rows.forEach(function (e) {
+        lines.push([e.year, e.group, csvField(e.name), e.amount, ticketsFor(e.amount)].join(','));
+      });
+      var csvContent = '﻿' + lines.join('\r\n');
+      var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      var url = URL.createObjectURL(blob);
+      var yearLabel = ui.filterYear === 'all' ? '全年度' : (ui.filterYear + '年度');
+      var groupLabel = ui.filterGroup === 'all' ? '全班' : (ui.filterGroup + '班');
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = '芳名帳_' + yearLabel + '_' + groupLabel + '.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+})();
+</script>
+</body>
+</html>
